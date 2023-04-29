@@ -109,28 +109,26 @@ func Unflatten(m map[string]interface{}, delim string) map[string]interface{} {
 // Use IntfaceKeysToStrings() to convert if necessary.
 func Merge(a, b map[string]interface{}) {
 	for key, val := range a {
-		// Does the key exist in the target map?
-		// If no, add it and move on.
-		bVal, ok := b[key]
-		if !ok {
-			b[key] = val
-			continue
-		}
-
+		// If the incoming key has the ArrayMergeSuffix, merge the array.
 		if ArrayMergeSuffix != "" && strings.HasSuffix(key, ArrayMergeSuffix) {
 			// Remove the suffix from the key
 			tagetKey := strings.TrimSuffix(key, ArrayMergeSuffix)
 
 			// If the incoming val is array, merge the array.
 			v, ok1 := val.([]interface{})
-			Bv, ok2 := bVal.([]interface{})
+			Bv, ok2 := b[tagetKey].([]interface{})
 			if ok1 && ok2 {
 				b[tagetKey] = append(Bv, v...)
-				// Remove the key from the map
-				// TODO: This should be done maybe differently
-				delete(b, key)
 				continue
 			}
+		}
+
+		// Does the key exist in the target map?
+		// If no, add it and move on.
+		bVal, ok := b[key]
+		if !ok {
+			b[key] = val
+			continue
 		}
 
 		// If the incoming val is not a map, do a direct merge.
