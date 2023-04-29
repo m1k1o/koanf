@@ -11,6 +11,8 @@ import (
 	"github.com/mitchellh/copystructure"
 )
 
+const ArrayMergeSuffix = "[]"
+
 // Flatten takes a map[string]interface{} and traverses it and flattens
 // nested children into keys delimited by delim.
 //
@@ -113,6 +115,22 @@ func Merge(a, b map[string]interface{}) {
 		if !ok {
 			b[key] = val
 			continue
+		}
+
+		if ArrayMergeSuffix != "" && strings.HasSuffix(key, ArrayMergeSuffix) {
+			// Remove the suffix from the key
+			tagetKey := strings.TrimSuffix(key, ArrayMergeSuffix)
+
+			// If the incoming val is array, merge the array.
+			v, ok1 := val.([]interface{})
+			Bv, ok2 := bVal.([]interface{})
+			if ok1 && ok2 {
+				b[tagetKey] = append(Bv, v...)
+				// Remove the key from the map
+				// TODO: This should be done maybe differently
+				delete(b, key)
+				continue
+			}
 		}
 
 		// If the incoming val is not a map, do a direct merge.
